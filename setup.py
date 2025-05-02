@@ -1,8 +1,19 @@
 from setuptools import setup, find_packages
+import os
+import re
+
+def get_version():
+    here = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(here, "medicare_utils", "__init__.py")) as f:
+        content = f.read()
+    match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content, re.M)
+    if match:
+        return match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 setup(
     name="medicare_utils",
-    version=__version__,
+    version=get_version(),
     packages=find_packages(),
     entry_points={
         'console_scripts': [
