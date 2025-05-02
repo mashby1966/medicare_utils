@@ -1,6 +1,7 @@
 import random
 from typing import List
 from medicare_utils.exceptions import MedicareValidationError
+import re
 
 def generate(base_number: str, issue_number: int) -> str:
     """Generate a valid Medicare number given a base number and issue number.
@@ -44,3 +45,35 @@ def generate_many(count: int, seed: int = None) -> List[str]:
     if seed is not None:
         random.seed(seed)
     return [generate_random() for _ in range(count)]
+
+def generate_ihi(iin: str = "800360") -> str:
+    """
+    Generate a valid IHI number.
+
+    Args:
+        iin (str): The first 6 digits of the IHI (default: '800360').
+
+    Returns:
+        str: A valid 16-digit IHI number.
+    """
+    if not re.fullmatch(r"\d{6}", iin):
+        raise ValueError("IIN must be a 6-digit numeric string.")
+
+    iai = f"{random.randint(0, 999_999_999):09d}"  # 9-digit random IAI
+    base = iin + iai
+
+    reversed_digits = list(map(int, reversed(base)))
+    even_sum = 0
+    odd_sum = 0
+
+    for i, d in enumerate(reversed_digits):
+        if i % 2 == 0:
+            doubled = d * 2
+            odd_sum += doubled - 9 if doubled > 9 else doubled
+        else:
+            even_sum += d
+
+    total = even_sum + odd_sum
+    check_digit = (10 - (total % 10)) % 10
+
+    return base + str(check_digit)

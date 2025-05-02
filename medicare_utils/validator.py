@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 from medicare_utils.exceptions import MedicareValidationError
+import re
 
 @dataclass
 class ValidationResult:
@@ -54,3 +55,38 @@ def validate(medicare_number: str) -> ValidationResult:
 def is_valid(medicare_number: str) -> bool:
     """Check if a Medicare number is valid. Returns True or False."""
     return validate(medicare_number).is_valid
+
+def _is_ihi_number(candidate: str) -> bool:
+    """Check if a string structurally resembles an IHI number."""
+    return bool(re.fullmatch(r"800360\d{9}\d", candidate))
+
+def validate_ihi(ihi: str) -> bool:
+    """
+    Validate an IHI number using the Luhn checksum.
+    
+    Args:
+        ihi (str): 16-digit IHI string.
+        
+    Returns:
+        bool: True if valid, False otherwise.
+    """
+    if not _is_ihi_number(ihi):
+        return False
+
+    reversed_digits = list(map(int, reversed(ihi[:-1])))  # Exclude check digit
+    check_digit = int(ihi[-1])
+
+    even_sum = 0
+    odd_sum = 0
+
+    for i, d in enumerate(reversed_digits):
+        if i % 2 == 0:
+            doubled = d * 2
+            odd_sum += doubled - 9 if doubled > 9 else doubled
+        else:
+            even_sum += d
+
+    total = even_sum + odd_sum
+    calculated = (10 - (total % 10)) % 10
+
+    return check_digit == calculated
